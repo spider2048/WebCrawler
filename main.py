@@ -1,6 +1,7 @@
 import argparse
 import toml
 import logging
+import asyncio
 
 from crawler import Crawler
 
@@ -15,13 +16,14 @@ def main(args):
         logging.basicConfig(filename=config['crawl_options']['log_file'],
                             level=logging.INFO, force=True)
     
+    logging.debug('starting logging at: %s', __import__('time').asctime())
     c = Crawler(config)
-    # TODO
+    asyncio.run(c.finish())
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-config', required=True)
-    parser.add_argument('-debug', required=False, type=bool)
+    parser.add_argument('-debug', required=False, default=False, type=bool)
 
     args = parser.parse_args()
     main(args)
