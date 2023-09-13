@@ -1,0 +1,13 @@
+[crawl_options]
+log_file = './crawl.log'
+database_location = './crawl.db'
+max_workers = 5
+
+[profiles]
+[profiles.my_website]
+    locations = [
+        'spider2.vercel.app'
+    ]
+    depth = 1
+    method = 'hash'  # cosine
+    same_domain = true  # Todo: regex match
