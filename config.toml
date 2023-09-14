@@ -10,4 +10,5 @@ database_location = './crawl.db'
 
     depth = 2
     method = 'hash'  # cosine
-    same_domain = false  # Todo: regex match
+    same_domain = true  # Todo: regex match
+

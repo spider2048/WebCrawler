@@ -1,28 +1,41 @@
 from scraper import Scraper
 import logging
 import asyncio
-import aiosqlite
+import os
+import time
+
 
 class Crawler:
     def __init__(self, options):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
-        self.futures :list[asyncio.Coroutine] = []
+        self.futures: list[asyncio.Coroutine] = []
+        self.timestamp = time.asctime().replace(':', '-')
 
         crawl_options = options["crawl_options"]
         assert crawl_options.keys() == {
             "log_file",
             "database_location",
-            "max_workers",
         }
 
-        profiles = options.get("profiles")
+        if not os.path.exists('graphs'):
+            os.mkdir('graphs')
         
+        if not os.path.exists(f'graphs/{self.timestamp}'):
+            os.mkdir(f'graphs/{self.timestamp}')
+        
+        if not os.path.exists('data'):
+            os.mkdir('data')
+
+        profiles = options.get("profiles")
+
         self.logger.info("Checking profiles [%d profile(s)]", len(profiles))
         for it, profile in enumerate(profiles):
             self.logger.info("%d> %s", it + 1, profile)
-            scraper = Scraper(profile, profiles[profile], crawl_options['database_location'])
+            scraper = Scraper(
+                profile, profiles[profile], crawl_options["database_location"], self.timestamp
+            )
             self.futures.append(scraper.crawl())
 
     async def finish(self):
-        return await asyncio.gather(*self.futures)
+        await asyncio.gather(*self.futures)
