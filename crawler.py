@@ -10,7 +10,7 @@ class Crawler:
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
         self.futures: list[asyncio.Coroutine] = []
-        self.timestamp = time.asctime().replace(':', '-')
+        self.timestamp = time.asctime().replace(":", "-")
 
         crawl_options = options["crawl_options"]
         assert crawl_options.keys() == {
@@ -18,14 +18,14 @@ class Crawler:
             "database_location",
         }
 
-        if not os.path.exists('graphs'):
-            os.mkdir('graphs')
-        
-        if not os.path.exists(f'graphs/{self.timestamp}'):
-            os.mkdir(f'graphs/{self.timestamp}')
-        
-        if not os.path.exists('data'):
-            os.mkdir('data')
+        if not os.path.exists("graphs"):
+            os.mkdir("graphs")
+
+        if not os.path.exists(f"graphs/{self.timestamp}"):
+            os.mkdir(f"graphs/{self.timestamp}")
+
+        if not os.path.exists("data"):
+            os.mkdir("data")
 
         profiles = options.get("profiles")
 
@@ -33,7 +33,10 @@ class Crawler:
         for it, profile in enumerate(profiles):
             self.logger.info("%d> %s", it + 1, profile)
             scraper = Scraper(
-                profile, profiles[profile], crawl_options["database_location"], self.timestamp
+                profile,
+                profiles[profile],
+                crawl_options["database_location"],
+                self.timestamp,
             )
             self.futures.append(scraper.crawl())
 

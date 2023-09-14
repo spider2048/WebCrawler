@@ -60,19 +60,23 @@ class Scraper:
 
     async def store_graph(self):
         try:
-            nx.nx_agraph.write_dot(self.graph, f'graphs/{self.timestamp}/{self.profile}.dot')
+            nx.nx_agraph.write_dot(
+                self.graph, f"graphs/{self.timestamp}/{self.profile}.dot"
+            )
         except Exception as err:
             self.logger.error("failed to store_graph: %s", err)
 
     async def store_db(self):
-        self.logger.debug('%s store_db', self.profile)
+        self.logger.debug("%s store_db", self.profile)
         self.conn = await aiosqlite.connect(self.db)
         await self.conn.execute(
             f"CREATE TABLE IF NOT EXISTS {self.profile} (url TEXT, time INT, hash VARCHAR(64))",
         )
 
         for data in self.url_data:
-            await self.conn.execute(f'INSERT INTO {self.profile} VALUES (?, ?, ?)', data)
+            await self.conn.execute(
+                f"INSERT INTO {self.profile} VALUES (?, ?, ?)", data
+            )
         await self.conn.commit()
         await self.conn.close()
 
@@ -85,11 +89,9 @@ class Scraper:
 
             cdata = zlib.compress(content.encode())
             hash = hashlib.sha1(cdata)
-            self.url_data.append(
-                [url, self.timestamp, hash.hexdigest()]
-            )
+            self.url_data.append([url, self.timestamp, hash.hexdigest()])
 
-            with open(f'data/{hash.hexdigest()}', 'wb+') as fd:
+            with open(f"data/{hash.hexdigest()}", "wb+") as fd:
                 fd.write(cdata)
 
             self.graph.add_edges_from([(url, l) for l in links])
@@ -112,10 +114,7 @@ class Scraper:
             self.queue = self.new_queue.copy()
             self.new_queue.clear()
 
-        await asyncio.gather(
-            self.store_db(), self.store_graph()
-        )
-
+        await asyncio.gather(self.store_db(), self.store_graph())
 
     async def fetch_page(self, root_url):
         self.logger.debug("fetch page: %s", root_url)
