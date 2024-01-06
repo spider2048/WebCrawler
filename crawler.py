@@ -8,15 +8,16 @@ import time
 class Crawler:
     def __init__(self, options):
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.INFO)
         self.futures: list[asyncio.Coroutine] = []
         self.timestamp = time.asctime().replace(":", "-")
 
         crawl_options = options["crawl_options"]
-        assert crawl_options.keys() == {
-            "log_file",
-            "database_location",
-        }
+        assert crawl_options.keys() == {"log_file", "database_location", "debug"}
+
+        if crawl_options["debug"]:
+            self.logger.setLevel(logging.DEBUG)
+        else:
+            self.logger.setLevel(logging.INFO)
 
         if not os.path.exists("graphs"):
             os.mkdir("graphs")
@@ -30,8 +31,8 @@ class Crawler:
         profiles = options.get("profiles")
 
         self.logger.info("Checking profiles [%d profile(s)]", len(profiles))
-        for it, profile in enumerate(profiles):
-            self.logger.info("%d> %s", it + 1, profile)
+        for it, profile in enumerate(profiles, start=1):
+            self.logger.info("%d> %s", it, profile)
             scraper = Scraper(
                 profile,
                 profiles[profile],

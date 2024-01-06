@@ -10,7 +10,7 @@ def main(args):
     with open(args.config) as fd:
         config = toml.load(fd)
 
-    if args.debug:
+    if config["crawl_options"]["debug"]:
         logging.basicConfig(
             filename=config["crawl_options"]["log_file"],
             level=logging.DEBUG,
@@ -29,7 +29,5 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-config", required=True)
-    parser.add_argument("-debug", required=False, default=False, type=bool)
-
     args = parser.parse_args()
     main(args)

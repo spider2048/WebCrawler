@@ -1,14 +1,50 @@
 [crawl_options]
 log_file = './crawl.log'
 database_location = './crawl.db'
+debug = false
 
 [profiles]
-[profiles.my_website]
+# [profiles.my_website]
+#     locations = [
+#         'https://sp1d3r.vercel.app'
+#     ]
+
+#     depth = 3
+#     method = 'hash'  # cosine
+#     same_domain = true  # Todo: regex match
+
+# [profiles.my_other_website]
+#     locations = [
+#         'https://sp1d3r.vercel.app'
+#     ]
+#
+#     depth = 2
+#     method = 'hash'  # cosine
+#     same_domain = true  # Todo: regex match
+
+# [profiles.my_github]
+# 	locations = [
+# 		'https://github.com/spider2048/'
+# 	]
+
+# 	depth = 2
+# 	method = 'hash'
+# 	same_domain = true
+
+# [profiles.putatoe]
+# 	locations = [
+# 		'https://putatoeclone.netlify.app/'
+# 	]
+
+# 	depth = 2
+# 	method = 'hash'
+# 	same_domain = false
+
+[profiles.scrape_me]
     locations = [
-        'https://spider2.vercel.app'
+        'https://scrapeme.live/shop/'
     ]
 
-    depth = 2
-    method = 'hash'  # cosine
-    same_domain = true  # Todo: regex match
-
+    depth = 1
+    method = 'hash'
+    same_domain = true
