@@ -4,17 +4,36 @@ database_location = './crawl.db'
 debug = false
 
 [profiles]
-# [profiles.my_website]
-#     locations = [
-#         'https://sp1d3r.vercel.app'
-#     ]
+[profiles.my_website]
+    locations = [
+        'https://sp1d3r.vercel.app'
+    ]
 
-#     depth = 3
-#     method = 'hash'  # cosine
-#     same_domain = true  # Todo: regex match
+    depth = 3
+    method = 'hash'  # cosine
+    same_domain = true  # Todo: regex match
+
+[profiles.next_mosh]
+    locations = [
+        'https://nextmosh.vercel.app/'
+    ]
+
+    depth = 3
+    method = 'hash'
+    same_domain = true
+
+[profiles.transform_tools]
+    locations = [
+        'https://transform.tools/'
+    ]
+
+    depth = 2
+    method = 'hash'  # cosine
+    same_domain = true  # Todo: regex match
+
 
 # [profiles.my_other_website]
-#     locations = [
+#       locations = [
 #         'https://sp1d3r.vercel.app'
 #     ]
 #
@@ -40,11 +59,11 @@ debug = false
 # 	method = 'hash'
 # 	same_domain = false
 
-[profiles.scrape_me]
-    locations = [
-        'https://scrapeme.live/shop/'
-    ]
+# [profiles.scrape_me]
+#     locations = [
+#         'https://scrapeme.live/shop/'
+#     ]
 
-    depth = 1
-    method = 'hash'
-    same_domain = true
+#     depth = 2
+#     method = 'hash'
+#     same_domain = true

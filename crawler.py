@@ -1,4 +1,5 @@
 from scraper import Scraper
+from typing import List
 import logging
 import asyncio
 import os
@@ -8,7 +9,7 @@ import time
 class Crawler:
     def __init__(self, options):
         self.logger = logging.getLogger(__name__)
-        self.futures: list[asyncio.Coroutine] = []
+        self.futures: List = []
         self.timestamp = time.asctime().replace(":", "-")
 
         crawl_options = options["crawl_options"]

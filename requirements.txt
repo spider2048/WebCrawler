@@ -1,0 +1,7 @@
+grequests
+uvloop
+toml
+lxml
+aiosqlite
+sqlalchemy
+networkx
