@@ -1,7 +1,8 @@
 import argparse
-import toml
-import logging
 import asyncio
+import logging
+
+import toml
 
 from crawler import Crawler
 
@@ -18,9 +19,7 @@ def main(args):
         )
     else:
         logging.basicConfig(
-            filename=config["crawl_options"]["log_file"],
-            level=logging.INFO,
-            force=True
+            filename=config["crawl_options"]["log_file"], level=logging.INFO, force=True
         )
 
     logging.debug("starting logging at: %s", __import__("time").asctime())

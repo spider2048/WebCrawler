@@ -1,9 +1,10 @@
-from scraper import Scraper
-from typing import List
-import logging
 import asyncio
+import logging
 import os
 import time
+from typing import List
+
+from scraper import Scraper
 
 
 class Crawler:

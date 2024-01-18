@@ -1,27 +1,32 @@
-from typing import Coroutine, List, Set
 import asyncio
-from urllib.parse import urldefrag, urljoin, urlparse
-import networkx as nx
-import aiosqlite
-import zlib
-from lxml import html
 import hashlib
 import logging
 import time
+import zlib
+from typing import Coroutine, List, Set
+from urllib.parse import urldefrag, urljoin, urlparse
+
 import grequests
-import sqlalchemy
+import networkx as nx
+import ujson as json  # Faster JSON
+from lxml import html
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 
 class Scraper:
     def __init__(self, profile_name: str, options, db, timestamp, debug=False) -> None:
-        assert options.keys() == {"locations", "depth", "method", "same_domain"}
+        # Logging
         self.logger = logging.getLogger(__name__)
-
         if debug:
             self.logger.setLevel(logging.DEBUG)
         else:
             self.logger.setLevel(logging.INFO)
 
+        # Parse/Get options
+        assert options.keys() == {"locations", "depth", "method", "same_domain"}
         (
             (_, self.loc),
             (_, self.max_depth),
@@ -29,66 +34,81 @@ class Scraper:
             (_, self.same_domain),
         ) = options.items()
 
-        self.profile: str      = profile_name
-        self.visited_urls: set = set()
+        self.profile: str = profile_name
+
+        # Graphing
         self.graph: nx.DiGraph = nx.DiGraph()
         self.tasks: List[Coroutine] = []
 
+        # URL Queues (sets)
         self.queue = set(self.loc)
         self.new_queue = set()
-
+        self.visited_urls: set = set()
         self.url_table = []
 
-        self.conn = None
-        self.db = db
+        # Database (SQLAlchemy)
+        self.Base = declarative_base()
+        self.engine = create_async_engine(f"sqlite+aiosqlite:///{db}")
 
-        self.timestamp = timestamp
+        self.Ty_UrlData = type(
+            "UrlData",
+            (self.Base,),
+            {
+                "__tablename__": self.profile,
+                "id": Column(Integer, primary_key=True, autoincrement=True),
+                "url": Column(String, nullable=False),
+                "time": Column(Integer, nullable=False),
+                "hash": Column(String(64), nullable=False),
+            },
+        )
+
+        self.session_maker = sessionmaker(bind=self.engine, class_=AsyncSession)
+        self.db_initialized = False
+
+        # Timestamps
+        self.timestamp = timestamp  # For graph's parent folder
         self.current_time = int(time.time())
 
     def fetch_links(self, root_url: str, resp_text: str) -> Set:
         links = set()
-
         root_domain = urlparse(root_url).netloc
-
         for a_tag in html.fromstring(resp_text).xpath("//a"):
             href = a_tag.get("href")
             if not href:
                 continue
-
-            link = href
             link = urljoin(root_url, href)
 
+            # Filter cross-site links
             if self.same_domain and urlparse(link).netloc != root_domain:
                 continue
-
-            link, _ = urldefrag(link)
+            link, _ = urldefrag(link)  # Remove fragments
             links.add(link)
-
         return links
 
     async def store_graph(self):
         try:
-            import pygraphviz
-            nx.nx_agraph.write_dot(
-                self.graph, f"graphs/{self.timestamp}/{self.profile}.dot"
-            )
+            with open(f"graphs/{self.timestamp}/{self.profile}.json", "w+") as fd:
+                json.dump(nx.node_link_data(self.graph), fd)
         except Exception as err:
             self.logger.error("failed to store_graph: %s", err)
 
-    async def store_db(self):
-        # TODO: replace with sql alchemy
-        self.logger.debug("%s store_db", self.profile)
-        self.conn = await aiosqlite.connect(self.db)
-        await self.conn.execute(
-            f"CREATE TABLE IF NOT EXISTS {self.profile} (url TEXT, time INT, hash VARCHAR(64))",
-        )
+    async def init_db(self):
+        if self.db_initialized:
+            return
+        async with self.engine.begin() as conn:
+            await conn.run_sync(self.Base.metadata.drop_all)
+            await conn.run_sync(self.Base.metadata.create_all)
+        self.db_initialized = True
 
-        for data in self.url_table:
-            await self.conn.execute(
-                f"INSERT INTO {self.profile} VALUES (?, ?, ?)", data
-            )
-        await self.conn.commit()
-        await self.conn.close()
+    async def store_db(self):
+        self.logger.debug("%s store_db", self.profile)
+        await self.init_db()
+        async with self.session_maker() as session:
+            for data in self.url_table:
+                d = self.Ty_UrlData()
+                d.url, d.time, d.hash = data
+                session.add(d)
+            await session.commit()
 
     async def crawl_worker(self, url: str, session: grequests.Session):
         self.visited_urls.add(url)
@@ -111,8 +131,6 @@ class Scraper:
             self.graph.add_edge(url, f"ERROR {err}")
 
     async def crawl(self):
-        t_start = time.time()
-
         session = grequests.Session()
 
         for _ in range(self.max_depth):
@@ -125,14 +143,11 @@ class Scraper:
             self.queue = self.new_queue - self.visited_urls
             self.new_queue.clear()
 
-        print(f"[{self.profile}] Crawled: {len(self.visited_urls)} URLs in {time.time() - t_start:.2f} seconds")
+        print(f"[{self.profile}] Crawled: {len(self.visited_urls)} URLs")
         print(f"[{self.profile}] queue size: {len(self.queue)}")
 
         await asyncio.gather(self.store_db(), self.store_graph())
 
     async def fetch_page(self, session: grequests.Session, root_url: str):
         self.logger.debug("fetch page: %s", root_url)
-        # async with aiohttp.ClientSession() as session:
-        # async with session.get(root_url) as resp:
-        #     return await resp.text()
         return session.get(root_url).text
