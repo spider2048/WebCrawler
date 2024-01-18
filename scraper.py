@@ -1,4 +1,5 @@
 import asyncio
+import aiohttp
 import hashlib
 import logging
 import time
@@ -6,7 +7,6 @@ import zlib
 from typing import Coroutine, List, Set
 from urllib.parse import urldefrag, urljoin, urlparse
 
-import grequests
 import networkx as nx
 import ujson as json  # Faster JSON
 from lxml import html
@@ -110,7 +110,7 @@ class Scraper:
                 session.add(d)
             await session.commit()
 
-    async def crawl_worker(self, url: str, session: grequests.Session):
+    async def crawl_worker(self, url: str, session: aiohttp.ClientSession):
         self.visited_urls.add(url)
         self.logger.debug("visiting: %s", url)
         try:
@@ -131,7 +131,7 @@ class Scraper:
             self.graph.add_edge(url, f"ERROR {err}")
 
     async def crawl(self):
-        session = grequests.Session()
+        session = aiohttp.ClientSession()
 
         for _ in range(self.max_depth):
             for url in self.queue:
@@ -147,7 +147,9 @@ class Scraper:
         print(f"[{self.profile}] queue size: {len(self.queue)}")
 
         await asyncio.gather(self.store_db(), self.store_graph())
+        await session.close()
 
-    async def fetch_page(self, session: grequests.Session, root_url: str):
+    async def fetch_page(self, session: aiohttp.ClientSession, root_url: str):
         self.logger.debug("fetch page: %s", root_url)
-        return session.get(root_url).text
+        async with session.get(root_url) as resp:
+            return await resp.text()

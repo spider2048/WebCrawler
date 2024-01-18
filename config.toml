@@ -1,7 +1,7 @@
 [crawl_options]
 log_file = './crawl.log'
 database_location = './crawl.db'
-debug = false
+debug = true
 
 [profiles]
 [profiles.my_website]
