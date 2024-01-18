@@ -64,6 +64,6 @@ debug = true
 #         'https://scrapeme.live/shop/'
 #     ]
 
-#     depth = 2
+#     depth = 3
 #     method = 'hash'
 #     same_domain = true

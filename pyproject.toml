@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "webcrawler2"
+name = "webcrawler"
 version = "0.1.0"
 description = ""
 authors = ["Sp1d3R <aspy1337@gmail.com>"]
@@ -14,6 +14,7 @@ sqlalchemy = "^2.0.25"
 networkx = "^3.2.1"
 ujson = "^5.9.0"
 aiohttp = "^3.9.1"
+aiofiles = "^23.2.1"
 
 
 [build-system]

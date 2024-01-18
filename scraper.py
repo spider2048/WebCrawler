@@ -7,6 +7,7 @@ import zlib
 from typing import Coroutine, List, Set
 from urllib.parse import urldefrag, urljoin, urlparse
 
+import aiofiles
 import networkx as nx
 import ujson as json  # Faster JSON
 from lxml import html
@@ -117,12 +118,12 @@ class Scraper:
             content: str = await self.fetch_page(session, url)
             links: Set[str] = self.fetch_links(url, content)
 
-            cdata = zlib.compress(content.encode())
-            hash = hashlib.sha1(cdata)
+            cdata: bytes = zlib.compress(content.encode())
+            hash :hashlib._Hash = hashlib.sha1(cdata)
             self.url_table.append([url, self.current_time, hash.hexdigest()])
 
-            with open(f"data/{hash.hexdigest()}", "wb+") as fd:
-                fd.write(cdata)
+            async with aiofiles.open(f"data/{hash.hexdigest()}", "wb+") as fd:
+                await fd.write(cdata)   
 
             self.graph.add_edges_from((url, l) for l in links)
             self.new_queue.update(links)
@@ -134,8 +135,7 @@ class Scraper:
         session = aiohttp.ClientSession()
 
         for _ in range(self.max_depth):
-            for url in self.queue:
-                self.tasks.append(self.crawl_worker(url, session))
+            self.tasks.extend(self.crawl_worker(url, session) for url in self.queue)
 
             await asyncio.gather(*self.tasks)
             self.tasks.clear()
