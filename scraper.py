@@ -42,14 +42,14 @@ class Scraper:
         self.tasks: List[Coroutine] = []
 
         # URL Queues (sets)
-        self.queue = set(self.loc)
-        self.new_queue = set()
-        self.visited_urls: set = set()
-        self.url_table = []
+        self.queue: Set[str] = set(self.loc)
+        self.new_queue: Set[str] = set()
+        self.visited_urls: Set[str] = set()
+        self.url_table: List[str] = []
 
         # Database (SQLAlchemy)
         self.Base = declarative_base()
-        self.engine = create_async_engine(f"sqlite+aiosqlite:///{db}")
+        self.engine = create_async_engine(f"sqlite+aiosqlite:///{db}", echo=debug)
 
         self.Ty_UrlData = type(
             "UrlData",
@@ -63,14 +63,14 @@ class Scraper:
             },
         )
 
-        self.session_maker = sessionmaker(bind=self.engine, class_=AsyncSession)
-        self.db_initialized = False
+        session_maker = sessionmaker(bind=self.engine, class_=AsyncSession)
+        self.session = session_maker()
 
         # Timestamps
         self.timestamp = timestamp  # For graph's parent folder
         self.current_time = int(time.time())
 
-    def fetch_links(self, root_url: str, resp_text: str) -> Set:
+    async def fetch_links(self, root_url: str, resp_text: str) -> Set:
         links = set()
         root_domain = urlparse(root_url).netloc
         for a_tag in html.fromstring(resp_text).xpath("//a"):
@@ -93,37 +93,24 @@ class Scraper:
         except Exception as err:
             self.logger.error("failed to store_graph: %s", err)
 
-    async def init_db(self):
-        if self.db_initialized:
-            return
-        async with self.engine.begin() as conn:
-            await conn.run_sync(self.Base.metadata.drop_all)
-            await conn.run_sync(self.Base.metadata.create_all)
-        self.db_initialized = True
-
-    async def store_db(self):
-        self.logger.debug("%s store_db", self.profile)
-        await self.init_db()
-        async with self.session_maker() as session:
-            for data in self.url_table:
-                d = self.Ty_UrlData()
-                d.url, d.time, d.hash = data
-                session.add(d)
-            await session.commit()
-
-    async def crawl_worker(self, url: str, session: aiohttp.ClientSession):
+    async def crawl_worker(self, url: str, websession: aiohttp.ClientSession):
         self.visited_urls.add(url)
         self.logger.debug("visiting: %s", url)
         try:
-            content: str = await self.fetch_page(session, url)
-            links: Set[str] = self.fetch_links(url, content)
+            content: str = await self.fetch_page(websession, url)
+            links: Set[str] = await self.fetch_links(url, content)
 
             cdata: bytes = zlib.compress(content.encode())
-            hash :hashlib._Hash = hashlib.sha1(cdata)
-            self.url_table.append([url, self.current_time, hash.hexdigest()])
+            hash: hashlib._Hash = hashlib.sha1(cdata)
+
+            d = self.Ty_UrlData()
+            d.url = url
+            d.time = self.current_time
+            d.hash = hash.hexdigest()
+            self.session.add(d)
 
             async with aiofiles.open(f"data/{hash.hexdigest()}", "wb+") as fd:
-                await fd.write(cdata)   
+                await fd.write(cdata)
 
             self.graph.add_edges_from((url, l) for l in links)
             self.new_queue.update(links)
@@ -132,10 +119,15 @@ class Scraper:
             self.graph.add_edge(url, f"ERROR {err}")
 
     async def crawl(self):
-        session = aiohttp.ClientSession()
+        # Initialize database
+        async with self.engine.begin() as conn:
+            await conn.run_sync(self.Base.metadata.drop_all)
+            await conn.run_sync(self.Base.metadata.create_all)
 
+        # Start crawling
+        websession = aiohttp.ClientSession()
         for _ in range(self.max_depth):
-            self.tasks.extend(self.crawl_worker(url, session) for url in self.queue)
+            self.tasks.extend(self.crawl_worker(url, websession) for url in self.queue)
 
             await asyncio.gather(*self.tasks)
             self.tasks.clear()
@@ -146,8 +138,10 @@ class Scraper:
         print(f"[{self.profile}] Crawled: {len(self.visited_urls)} URLs")
         print(f"[{self.profile}] queue size: {len(self.queue)}")
 
-        await asyncio.gather(self.store_db(), self.store_graph())
-        await session.close()
+        await self.store_graph()
+        await self.session.commit()
+        await self.session.close()
+        await websession.close()
 
     async def fetch_page(self, session: aiohttp.ClientSession, root_url: str):
         self.logger.debug("fetch page: %s", root_url)
