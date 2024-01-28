@@ -1,7 +1,9 @@
 [crawl_options]
 log_file = './crawl.log'
-database_location = './crawl.db'
+database_location = 'crawl.db'
 debug = false
+cache_dir = './data'
+graph_dir = './graphs'
 
 [profiles]
 [profiles.my_website]
