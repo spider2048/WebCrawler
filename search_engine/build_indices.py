@@ -1,7 +1,5 @@
-from glob import glob
 from typing import Set
 from bs4 import BeautifulSoup
-from pqdm.processes import pqdm
 import zlib
 
 from collections import defaultdict
@@ -15,16 +13,18 @@ import sqlalchemy
 from sqlalchemy.orm import sessionmaker
 import toml
 
-from models import Config
+import sys
+
+sys.path.extend(os.getcwd())
+
+from models import CrawlConfig, IndexConfig
 
 
 class IndexBuilder:
-    def __init__(self, config_file: str):
+    def __init__(self, indexopts):
         self.indices = defaultdict(set)
         self.stop_words = set(stopwords.words("english"))
-
-        with open(config_file) as conf:
-            self.crawlopts :Config = conf['crawl_options']
+        self.indexopts = IndexConfig(indexopts)
 
     def replace_punctuation(self, ss: str):
         return ss.replace(".", "").replace("`", "").replace("/", "")
@@ -48,12 +48,9 @@ class IndexBuilder:
             content = zlib.decompress(fd.read())
 
         # Get page text
-        page_text = BeautifulSoup(content, "lxml") \
-                        .get_text(separator=".\n", strip=True)
+        page_text = BeautifulSoup(content, "lxml").get_text(separator=".\n", strip=True)
 
+        # Tokenize string
         tokens = self.tokenize(page_text)
         for token in tokens:
             self.indices[token].add(src_link)
-
-    def save_indices(self):
-        pass

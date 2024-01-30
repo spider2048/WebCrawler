@@ -23,7 +23,7 @@ class Scraper:
     def __init__(
         self,
         profile_config: ProfileConfig,
-        crawl_config: Config,
+        crawl_config: CrawlConfig,
         session: AsyncSession
     ) -> None:
         # Logging

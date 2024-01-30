@@ -19,7 +19,7 @@ class Crawler:
         self.logger = logging.getLogger(__name__)
         self.crawl_workers: List = []
 
-        self.crawlopts = Config(options["crawl_options"])
+        self.crawlopts = CrawlConfig(options["crawl_options"])
 
         if self.crawlopts.debug:
             self.logger.setLevel(logging.DEBUG)

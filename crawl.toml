@@ -5,6 +5,9 @@ debug = false
 cache_dir = './data'
 graph_dir = './graphs'
 
+[indexing]  # pkl files only
+database_location = './index.db'
+
 [profiles]
 # [profiles.my_website]
 #     locations = [

@@ -22,7 +22,8 @@ class URLCrawlStats(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     time = Column(Integer, nullable=False)
 
-class Config:
+
+class CrawlConfig:
     def __init__(self, options):
         self.log_file: str = options["log_file"]
         self.database: str = options["database_location"]
@@ -61,3 +62,8 @@ class ProfileConfig:
 
         # Async tasks
         self.file_save_tasks: List[Coroutine] = []
+
+
+class IndexConfig:
+    def __init__(self, opts) -> None:
+        self.database: str = opts["database_location"]
