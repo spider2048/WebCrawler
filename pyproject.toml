@@ -15,6 +15,11 @@ networkx = "^3.2.1"
 ujson = "^5.9.0"
 aiohttp = "^3.9.1"
 aiofiles = "^23.2.1"
+bs4 = "^0.0.2"
+pqdm = "^0.2.0"
+fuzzywuzzy = "^0.18.0"
+nltk = "^3.8.1"
+python-levenshtein = "^0.23.0"
 
 
 [build-system]

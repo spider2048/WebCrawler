@@ -6,40 +6,50 @@ cache_dir = './data'
 graph_dir = './graphs'
 
 [profiles]
-[profiles.my_website]
-    locations = [
-        'https://sp1d3r.vercel.app'
-    ]
+# [profiles.my_website]
+#     locations = [
+#         'https://sp1d3r.vercel.app'
+#     ]
 
-    depth = 3
-    method = 'hash'  # cosine
-    same_domain = true  # Todo: regex match
+#     depth = 3
+#     method = 'hash'  # cosine
+#     same_domain = true  # Todo: regex match
 
-[profiles.next_mosh]
+# [profiles.next_mosh]
+#     locations = [
+#         'https://nextmosh.vercel.app/'
+#     ]
+
+#     depth = 3
+#     method = 'hash'
+#     same_domain = true
+
+# [profiles.neovim]
+#     locations = [
+#         "https://neovim.io/"
+#     ]
+#     depth = 100
+#     method = 'hash'
+#     same_domain = true
+
+[profiles.medium]
     locations = [
-        'https://nextmosh.vercel.app/'
+        "https://wesodonnell.medium.com/"
     ]
 
     depth = 3
     method = 'hash'
     same_domain = true
 
-[profiles.neovim]
-    locations = [
-        "https://neovim.io/"
-    ]
-    depth = 100
-    method = 'hash'
-    same_domain = true
 
-[profiles.transform_tools]
-    locations = [
-        'https://transform.tools/'
-    ]
+# [profiles.transform_tools]
+#     locations = [
+#         'https://transform.tools/'
+#     ]
 
-    depth = 2
-    method = 'hash'  # cosine
-    same_domain = true  # Todo: regex match
+#     depth = 2
+#     method = 'hash'  # cosine
+#     same_domain = true  # Todo: regex match
 
 
 # [profiles.my_other_website]
@@ -56,7 +66,7 @@ graph_dir = './graphs'
 # 		'https://github.com/spider2048/'
 # 	]
 
-# 	depth = 2
+# 	depth = 3
 # 	method = 'hash'
 # 	same_domain = true
 
