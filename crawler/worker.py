@@ -1,9 +1,8 @@
 import asyncio
 import logging
 import os
-from typing import Dict, List, Union
+from typing import Dict, List
 
-from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession, AsyncEngine, create_async_engine
 
@@ -15,29 +14,42 @@ from models import *
 
 
 class Crawler:
-    def __init__(self, options) -> None:
+    def __init__(
+        self, crawlopts: CrawlConfig, profileopts: List[ProfileConfig]
+    ) -> None:
         self.logger = logging.getLogger(__name__)
-        self.crawl_workers: List = []
+        self.profiles: List[ProfileConfig] = profileopts
+        self.crawl_workers: List[Coroutine] = []
 
-        self.crawlopts = CrawlConfig(options["crawl_options"])
+        self.crawlopts: CrawlConfig = crawlopts
 
         if self.crawlopts.debug:
             self.logger.setLevel(logging.DEBUG)
         else:
             self.logger.setLevel(logging.INFO)
 
-        profiles: Dict[str, Union[str, int, bool]] = options["profiles"]
-        self.profiles = [ProfileConfig(name, opts) for (name, opts) in profiles.items()]
+        self.logger.info("Checking profiles [%d profile(s)]", len(profileopts))
 
-        self.logger.info("Checking profiles [%d profile(s)]", len(profiles))
-
-        self.engine: AsyncEngine = create_async_engine(
-            os.path.join("sqlite+aiosqlite:///", self.crawlopts.database),
-            echo=self.crawlopts.debug,
-        )
-
-        self.session_maker = sessionmaker(bind=self.engine, class_=AsyncSession)
+        # SQLAlchemy (engines)
+        self.engines: Dict[str, AsyncEngine] = {}
+        self.session_makers: Dict[str, sessionmaker] = {}
         self.sessions: List[AsyncSession] = []
+
+        # Profiles
+        for profile in profileopts:
+            engine: AsyncEngine = create_async_engine(
+                os.path.join(
+                    "sqlite+aiosqlite:///",
+                    os.path.join(
+                        self.crawlopts.database_dir, f"{profile.profile_name}.db"
+                    ),
+                ),
+                echo=self.crawlopts.debug,
+            )
+            self.engines[profile.profile_name] = engine
+            self.session_makers[profile.profile_name] = sessionmaker(
+                bind=engine, class_=AsyncSession
+            )
 
     async def run(self):
         # Setup database
@@ -60,42 +72,50 @@ class Crawler:
         await self.finish()
 
     async def crawl(self):
-        for it, conf in enumerate(self.profiles, start=1):
-            session = self.session_maker()
-            self.logger.info("%d> %s", it, conf.profile_name)
-            scraper = Scraper(conf, self.crawlopts, session)
+        for it, profile in enumerate(self.profiles, start=1):
+            # Get database session
+            session = self.session_makers[profile.profile_name]()
+
+            # Schedule scraper
+            self.logger.info("%d> %s", it, profile.profile_name)
+            scraper = Scraper(profile, self.crawlopts, session)
+
+            # Append session
             self.crawl_workers.append(scraper.crawl())
             self.sessions.append(session)
 
     async def save_all_files(self):
+        # Save all pending files
         for profile in self.profiles:
-            await asyncio.gather(*profile.file_save_tasks)
-            self.logger.info("Saved %d files to disk", len(profile.file_save_tasks))
+            await asyncio.gather(*profile.tasks)
+            self.logger.info(
+                "%s> Saved %d files to disk",
+                profile.profile_name,
+                len(profile.tasks),
+            )
 
     async def commit_sessions(self):
         self.logger.info("Committing sessions")
 
-        # Commit one-by-one
-        for session in self.sessions:
-            await session.commit()
+        # Commit all sessions
+        await asyncio.gather(*[session.commit() for session in self.sessions])
 
         # Close all sessions
-        self.session_maker.close_all()
+        for session_maker in self.session_makers.values():
+            session_maker.close_all()
 
     async def setup_database(self):
-        async with self.engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
+        logging.info("Setting up databases ...")
+
+        for engine in self.engines.values():
+            async with engine.begin() as conn:
+                await conn.exec_driver_sql("PRAGMA journal_mode = WAL;")
+                await conn.exec_driver_sql("PRAGMA busy_timeout = 5000;")
+                await conn.exec_driver_sql("PRAGMA synchronous = NORMAL;")
+                await conn.exec_driver_sql("PRAGMA cache_size = 100000000;")
+                await conn.exec_driver_sql("PRAGMA foreign_keys = true;")
+                await conn.exec_driver_sql("PRAGMA temp_store = memory;")
+                await conn.run_sync(Base.metadata.create_all)
 
     async def finish(self):
-        # Save database and files
         await asyncio.gather(self.commit_sessions(), self.save_all_files())
-
-        # Save entry to CrawlStats
-        self.logger.info("Saving entry to crawl stats")
-        engine = create_engine(os.path.join("sqlite:///", self.crawlopts.database))
-
-        session = sessionmaker(bind=engine)()
-        session.add(URLCrawlStats(time=self.crawlopts.unix_time))
-
-        session.commit()
-        session.close()

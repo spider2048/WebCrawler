@@ -1,9 +1,12 @@
+from urllib.parse import urlparse
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 
 import os
 import time
-from typing import Coroutine, List
+import datetime
+from typing import Coroutine, List, Set
+import re
 
 Base = declarative_base()
 
@@ -26,12 +29,14 @@ class URLCrawlStats(Base):
 class CrawlConfig:
     def __init__(self, options):
         self.log_file: str = options["log_file"]
-        self.database: str = options["database_location"]
+        self.database_dir: str = options["database_location"]
         self.debug: bool = options["debug"]
         self.cache_dir: str = options["cache_dir"]
         self.graph_dir: str = options["graph_dir"]
-        self.timestamp: int = time.asctime().replace(":", "-")
+        self.timestamp: str = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")
         self.unix_time: int = int(time.time())
+        self.graph_ts_dir = os.path.join(self.graph_dir, self.timestamp)
+        self.profile = options["profile"]
 
         # Create missing folders
         self.create_dirs()
@@ -40,16 +45,14 @@ class CrawlConfig:
         if not os.path.exists(self.graph_dir):
             os.mkdir(self.graph_dir)
 
-        self.graph_ts_dir = os.path.join(self.graph_dir, self.timestamp)
         if not os.path.exists(self.graph_ts_dir):
             os.mkdir(self.graph_ts_dir)
 
         if not os.path.exists(self.cache_dir):
             os.mkdir(self.cache_dir)
 
-        database_dir = os.path.dirname(self.database)
-        if database_dir and not os.path.exists(database_dir):
-            os.makedirs(database_dir)
+        if self.database_dir and not os.path.exists(self.database_dir):
+            os.makedirs(self.database_dir)
 
 
 class ProfileConfig:
@@ -57,13 +60,32 @@ class ProfileConfig:
         self.profile_name: str = profile_name
         self.locations: List[str] = profile["locations"]
         self.depth: int = profile["depth"]
-        self.method: str = profile["method"]
         self.same_domain: bool = profile["same_domain"]
 
-        # Async tasks
-        self.file_save_tasks: List[Coroutine] = []
+        self.domain: str = urlparse(self.locations[0]).netloc
+
+        self.filters: List[re.Pattern] = [
+            re.compile(pattern) for pattern in profile["filter"]
+        ]
+
+        self.matches: List[re.Pattern] = [
+            re.compile(pattern) for pattern in profile["match"]
+        ]
+
+        # File save tasks
+        self.tasks: List[Coroutine] = []
+
+    def filter(self, url: str) -> bool:
+        for filter in self.filters:
+            if re.search(filter, url):
+                return False
+
+        for matchp in self.matches:
+            if re.search(matchp, url):
+                return True
 
 
-class IndexConfig:
-    def __init__(self, opts) -> None:
-        self.database: str = opts["database_location"]
+        if self.same_domain and urlparse(url).netloc != self.domain:
+            return False
+
+        return True

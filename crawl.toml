@@ -1,92 +1,33 @@
 [crawl_options]
 log_file = './crawl.log'
-database_location = 'crawl.db'
+database_location = './databases'
 debug = false
+profile = true
 cache_dir = './data'
 graph_dir = './graphs'
 
-[indexing]  # pkl files only
-database_location = './index.db'
-
 [profiles]
-# [profiles.my_website]
+#  [profiles.my_website]
 #     locations = [
 #         'https://sp1d3r.vercel.app'
 #     ]
 
 #     depth = 3
-#     method = 'hash'  # cosine
-#     same_domain = true  # Todo: regex match
-
-# [profiles.next_mosh]
-#     locations = [
-#         'https://nextmosh.vercel.app/'
-#     ]
-
-#     depth = 3
-#     method = 'hash'
 #     same_domain = true
+#     filter = []
 
-# [profiles.neovim]
-#     locations = [
-#         "https://neovim.io/"
-#     ]
-#     depth = 100
-#     method = 'hash'
-#     same_domain = true
-
-[profiles.medium]
+[profiles.scrape_me]
     locations = [
-        "https://wesodonnell.medium.com/"
+        'https://scrapeme.live/shop/'
+    ]
+    depth = 3
+    same_domain = true
+    filter = [
+        '^http://scrapeme.live/page/.*',
+        '^https://scrapeme.live/shop/.*/?add-to-cart=.*',
+        '.*\.png$'
     ]
 
-    depth = 3
-    method = 'hash'
-    same_domain = true
-
-
-# [profiles.transform_tools]
-#     locations = [
-#         'https://transform.tools/'
-#     ]
-
-#     depth = 2
-#     method = 'hash'  # cosine
-#     same_domain = true  # Todo: regex match
-
-
-# [profiles.my_other_website]
-#       locations = [
-#         'https://sp1d3r.vercel.app'
-#     ]
-#
-#     depth = 2
-#     method = 'hash'  # cosine
-#     same_domain = true  # Todo: regex match
-
-# [profiles.my_github]
-# 	locations = [
-# 		'https://github.com/spider2048/'
-# 	]
-
-# 	depth = 3
-# 	method = 'hash'
-# 	same_domain = true
-
-# [profiles.putatoe]
-# 	locations = [
-# 		'https://putatoeclone.netlify.app/'
-# 	]
-
-# 	depth = 2
-# 	method = 'hash'
-# 	same_domain = false
-
-# [profiles.scrape_me]
-#     locations = [
-#         'https://scrapeme.live/shop/'
-#     ]
-
-#     depth = 3
-#     method = 'hash'
-#     same_domain = true
+    match = [
+        '^http://scrapeme.live/shop/.*'
+    ]

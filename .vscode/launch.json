@@ -8,10 +8,10 @@
             "name": "webcrawler debug",
             "type": "python",
             "request": "launch",
-            "program": "./main.py",
+            "module": "crawler",
             "console": "integratedTerminal",
-            "justMyCode": true,
-            "args": ["-config", "config.toml"]
+            "args": ["-config", "D:\\Coding\\Python\\WebCrawler\\crawl.toml"],
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
