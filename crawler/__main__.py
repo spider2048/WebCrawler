@@ -7,6 +7,7 @@ import cProfile
 from worker import Crawler
 from models import *
 
+LOGGING_FORMAT = "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s"
 
 def main(args):
     logging.info("Crawler running in: %s", os.getcwd())
@@ -23,9 +24,15 @@ def main(args):
             filename=crawlopts.log_file,
             level=logging.DEBUG,
             force=True,
+            format=LOGGING_FORMAT,
         )
     else:
-        logging.basicConfig(filename=crawlopts.log_file, level=logging.INFO, force=True)
+        logging.basicConfig(
+            filename=crawlopts.log_file,
+            level=logging.INFO,
+            force=True,
+            format=LOGGING_FORMAT,
+        )
 
     logger = logging.getLogger("CrawlerMain")
     logger.info("Preparing to crawl ...")

@@ -20,14 +20,19 @@ graph_dir = './graphs'
     locations = [
         'https://scrapeme.live/shop/'
     ]
+
     depth = 3
-    same_domain = true
+    
     filter = [
+        '^https://scrapeme.live/page/.*',
         '^http://scrapeme.live/page/.*',
         '^https://scrapeme.live/shop/.*/?add-to-cart=.*',
-        '.*\.png$'
+        '.*\.png$',
+        '.*\.jpg$',
+        '^https://scrapeme.live/product-tag/.*',
+        '^https://scrapeme.live/product-category/.*',
     ]
 
     match = [
-        '^http://scrapeme.live/shop/.*'
+        '^https://scrapeme.live/*'
     ]

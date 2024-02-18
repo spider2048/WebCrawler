@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base
 import os
 import time
 import datetime
-from typing import Coroutine, List, Set
+from typing import Coroutine, List
 import re
 
 Base = declarative_base()
@@ -60,10 +60,7 @@ class ProfileConfig:
         self.profile_name: str = profile_name
         self.locations: List[str] = profile["locations"]
         self.depth: int = profile["depth"]
-        self.same_domain: bool = profile["same_domain"]
-
-        self.domain: str = urlparse(self.locations[0]).netloc
-
+        
         self.filters: List[re.Pattern] = [
             re.compile(pattern) for pattern in profile["filter"]
         ]
@@ -76,16 +73,13 @@ class ProfileConfig:
         self.tasks: List[Coroutine] = []
 
     def filter(self, url: str) -> bool:
-        for filter in self.filters:
-            if re.search(filter, url):
+        if self.filters:
+            if any(re.search(filter, url) for filter in self.filters):
                 return False
-
-        for matchp in self.matches:
-            if re.search(matchp, url):
+        
+        if self.matches:
+            if any(re.search(matchp, url) for matchp in self.matches):
                 return True
-
-
-        if self.same_domain and urlparse(url).netloc != self.domain:
             return False
-
-        return True
+        else:
+            return True

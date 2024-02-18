@@ -27,3 +27,9 @@ The below snippet is used for defining a profile for the crawler.
 ```
 
 Refer to the `config.toml` file for more example usages.
+
+## TODO 
+
+- Add Graph frontend
+- Add Indexing
+- Add search engine
