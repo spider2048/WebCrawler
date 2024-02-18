@@ -45,17 +45,17 @@ class IndexManager:
 
     def get_all_data(self) -> None:
         session: Session = self.sessionmaker()
-        urldata = session.query(URLData.hash.distinct(), URLData.url, URLData.time).all()
+        urldata = session.query(URLData.hash.distinct()).all()
 
         logger.info("Found %d URLs to index", len(urldata))
 
         worker_args = []
-        for (hash, url, ts) in urldata:
+        for hash in urldata:
             src = os.path.join(
                 self.crawlopts.cache_dir,
-                str(hash)
+                str(hash[0])
             )
-            worker_args.append((src, (url, ts)))
+            worker_args.append(src)
         
         logger.info("Indexing with %d workers.", self.crawlopts.workers)
         t_start = time.perf_counter()
@@ -66,9 +66,9 @@ class IndexManager:
         logger.info("Finished indexing in %.2fs", t_end - t_start)
 
     def group_tokens(self):
-        for url, bigrams in self.token_pairs:
+        for hash, bigrams in self.token_pairs:
             for bigram in bigrams:
-                self.bigram_map[bigram].add(url)
+                self.bigram_map[bigram].add(hash)
 
     def save(self, dest):
         with open(dest, "wb+") as fd:
@@ -76,14 +76,13 @@ class IndexManager:
 
 class Indexer:
     @staticmethod
-    def worker(args):
-        src, (url, ts) = args
+    def worker(src):
         with open(src, "rb") as fd:
             content: bytes = zlib.decompress(fd.read())
 
         doctext: str = BeautifulSoup(content.decode(), "lxml").get_text(separator=".\n")
         tokens: Set[str] = Indexer.get_tokens(doctext)
-        return ((url, ts), tokens)
+        return (os.path.basename(src), tokens)
 
     @staticmethod
     def get_tokens(document: str) -> Set[str]:
