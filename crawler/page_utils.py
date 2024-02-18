@@ -8,6 +8,8 @@ from lxml import html
 import zlib
 import hashlib
 
+import unidecode
+
 from models import CrawlConfig, ProfileConfig
 
 logger = logging.getLogger("PageUtils")
@@ -26,8 +28,15 @@ class Page:
         return links
 
     @staticmethod
+    def title(document: str) -> str:
+        title = html.fromstring(document).xpath("//title/text()")
+        if title:
+            return unidecode.unidecode(title[0])
+        return ""
+
+
+    @staticmethod
     async def get(websession: aiohttp.ClientSession, url: str) -> str:
-        logger.debug("Fetch page %s", url)
         async with websession.get(url) as response:
             return await response.text()
 
@@ -53,7 +62,7 @@ class Page:
         websession: aiohttp.ClientSession,
         cache_dir: str,
         profile: ProfileConfig,
-    ) -> Tuple[Set[str], str]:
+    ) -> Tuple[Set[str], str, str]:
         content: str = await Page.get(websession, src)
         links: Set[str] = Page.links(src, content)
 
@@ -65,7 +74,7 @@ class Page:
         )
 
         Page.filter(links, profile)
-        return links, hash_str
+        return links, hash_str, Page.title(content)
 
     @staticmethod
     def filter(links: Set[str], profile: ProfileConfig):

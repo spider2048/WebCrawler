@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block head %}
+
+<script src="{{ url_for('static', filename='d3.js') }}"></script>
+
+{% endblock %}
+
+{% block body %}
+
+<div class="container m-5 mx-auto text-center">
+
+    <h1> Graph Visualizer</h1>
+    <span><b>Profile</b> {{ context.profile }}</span>
+    
+    <span>Timestamp {{ context.timestamp }}</span>
+
+    <div class="border">
+        <svg width="1024" height="768"></svg>
+    </div>
+</div>
+
+
+<script src="{{url_for('static', filename='script.js')}}"></script>
+{% endblock %}

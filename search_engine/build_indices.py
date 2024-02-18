@@ -17,7 +17,7 @@ import sys
 
 sys.path.extend(os.getcwd())
 
-from models import CrawlConfig, IndexConfig
+from models import CrawlConfig
 
 
 class IndexBuilder:

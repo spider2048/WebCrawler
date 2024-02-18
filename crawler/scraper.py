@@ -1,12 +1,11 @@
 import asyncio
+import trace
 import aiohttp
-import hashlib
 import logging
 import os
 import sys
-import zlib
 from typing import Coroutine, List, Set
-
+import traceback
 from sqlalchemy.ext.asyncio import AsyncSession
 
 sys.path.extend([os.getcwd()])
@@ -52,7 +51,7 @@ class Scraper:
 
         try:  # TODO: Find a better alternative
             # Fetch page and links
-            links, hash_str = await Page.parse(
+            links, hash_str, title = await Page.parse(
                 url, websession, self.crawlopts.cache_dir, self.profile
             )
 
@@ -63,14 +62,16 @@ class Scraper:
                     profile_name=self.profile.profile_name,
                     time=self.crawlopts.unix_time,
                     hash=hash_str,
+                    title=title
                 )
             )
 
-            self.graph.update_edges(url, links)
+            self.graph.update_edges(url, links, title)
             self.new_queue.update(links)
         except Exception as err:
             self.logger.error("Error (%s) crawling url %s", err, url)
-            self.graph.update_edges(url, [f"ERROR {err}"])
+            self.logger.error(traceback.format_exc())
+            self.graph.update_edges(url, [f"ERROR {err}"], "<error-title>")
 
     async def crawl(self):
         # Start crawling

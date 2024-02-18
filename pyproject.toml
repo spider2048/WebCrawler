@@ -17,11 +17,14 @@ aiohttp = "^3.9.1"
 aiofiles = "^23.2.1"
 bs4 = "^0.0.2"
 pqdm = "^0.2.0"
-fuzzywuzzy = "^0.18.0"
 nltk = "^3.8.1"
-python-levenshtein = "^0.23.0"
-redis = "^5.0.1"
-
+sortedcontainers = "^2.4.0"
+flask = "^3.0.2"
+bootstrap-flask = "^2.3.3"
+flask-minify = "^0.42"
+waitress = "^3.0.0"
+fuzzyset = "^0.1.2"
+unidecode = "^1.3.8"
 
 [build-system]
 requires = ["poetry-core"]

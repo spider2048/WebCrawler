@@ -1,4 +1,3 @@
-from urllib.parse import urlparse
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -7,9 +6,10 @@ import time
 import datetime
 from typing import Coroutine, List
 import re
+import toml
 
 Base = declarative_base()
-
+TIMESTAMP_FORMAT = "%Y-%m-%d %H-%M-%S"
 
 class URLData(Base):
     __tablename__: str = "URLProfileData"
@@ -18,28 +18,29 @@ class URLData(Base):
     profile_name = Column(String, nullable=False)
     time = Column(Integer, nullable=False)
     hash = Column(String(64), nullable=False)
-
-
-class URLCrawlStats(Base):
-    __tablename__: str = "URLCrawlStats"
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    time = Column(Integer, nullable=False)
-
+    title = Column(String, nullable=False)
 
 class CrawlConfig:
-    def __init__(self, options):
+    def __init__(self, options, make_dirs=True):
         self.log_file: str = options["log_file"]
         self.database_dir: str = options["database_location"]
         self.debug: bool = options["debug"]
         self.cache_dir: str = options["cache_dir"]
         self.graph_dir: str = options["graph_dir"]
-        self.timestamp: str = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+        self.timestamp: str = datetime.datetime.now().strftime(TIMESTAMP_FORMAT)
         self.unix_time: int = int(time.time())
         self.graph_ts_dir = os.path.join(self.graph_dir, self.timestamp)
         self.profile = options["profile"]
 
         # Create missing folders
-        self.create_dirs()
+        if make_dirs:
+            self.create_dirs()
+    
+    @classmethod
+    def load_config(cls, config_path, make_dirs=True):
+        with open(config_path) as fd:
+            allopts = toml.load(fd)
+            return cls(allopts["crawl_options"], make_dirs)
 
     def create_dirs(self):
         if not os.path.exists(self.graph_dir):

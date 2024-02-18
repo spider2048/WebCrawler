@@ -31,6 +31,7 @@ graph_dir = './graphs'
         '.*\.jpg$',
         '^https://scrapeme.live/product-tag/.*',
         '^https://scrapeme.live/product-category/.*',
+        '^https://scrapeme.live/wp-login.php.*$'
     ]
 
     match = [

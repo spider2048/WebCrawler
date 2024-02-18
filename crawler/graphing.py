@@ -11,7 +11,8 @@ class Graph:
     def __init__(self) -> None:
         self.graph = nx.DiGraph()
 
-    def update_edges(self, url: str, links: Iterable[str]):
+    def update_edges(self, url: str, links: Iterable[str], title: str):
+        self.graph.add_node(url, description=title)
         self.graph.add_edges_from((url, l) for l in links)
 
     async def save(self, dest) -> None:

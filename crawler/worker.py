@@ -55,7 +55,7 @@ class Crawler:
         # Setup database
         await self.setup_database()
 
-        self.logger.info("starting crawling at: %s", time.asctime())
+        self.logger.info("Starting crawling at: %s", time.asctime())
         t_start = time.perf_counter_ns()
 
         # Schedule crawl workers
@@ -65,8 +65,10 @@ class Crawler:
         await asyncio.gather(*self.crawl_workers)
 
         t_end = time.perf_counter_ns()
-        self.logger.info("ending crawling at: %s", time.asctime())
-        self.logger.info("Total time taken: %.5f", (t_end - t_start) / 1e9)
+        t_taken = (t_end - t_start) / 1e9
+
+        self.logger.info("Ending crawling at: %s", time.asctime())
+        self.logger.info("Total time taken: %.5f", t_taken)
 
         # Save entries to database
         await self.finish()

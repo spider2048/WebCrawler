@@ -14,7 +14,7 @@ def main(args):
     with open(args.config) as fd:
         config = toml.load(fd)
 
-    crawlopts = CrawlConfig(config["crawl_options"])
+    crawlopts = CrawlConfig.load_config(args.config)
     profileopts = [
         ProfileConfig(name, opts) for (name, opts) in config["profiles"].items()
     ]
