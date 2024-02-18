@@ -8,8 +8,10 @@ from app import create_app
 sys.path.extend(os.getcwd())
 from models import *
 
+
 def timestamp_to_unix(timestamp: str) -> float:
     return datetime.datetime.strptime(timestamp, TIMESTAMP_FORMAT).timestamp()
+
 
 def list_graphs(root):
     folders = os.listdir(root)
@@ -27,9 +29,11 @@ def list_graphs(root):
         for profile in profiles:
             print(f"\t {os.path.join(profile_root, profile)}")
 
+
 def show(path, debug=False):
     path = os.path.abspath(path)
     create_app(path, debug)
+
 
 def main(args):
     crawlopts = CrawlConfig.load_config(args.config, make_dirs=False)
@@ -37,16 +41,18 @@ def main(args):
     if args.list:
         list_graphs(crawlopts.graph_dir)
         return
-    
+
     if args.show:
         show(args.show, crawlopts.debug)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-config', help='Path to config file', required=True)
-    parser.add_argument('-list', help="List all graphs", required=False, action='store_true')
-    parser.add_argument('-show', help="View the specified graph", required=False)
-    
+    parser.add_argument("-config", help="Path to config file", required=True)
+    parser.add_argument(
+        "-list", help="List all graphs", required=False, action="store_true"
+    )
+    parser.add_argument("-show", help="View the specified graph", required=False)
+
     args = parser.parse_args()
     main(args)

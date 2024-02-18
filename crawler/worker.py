@@ -14,6 +14,7 @@ from models import *
 
 logger: logging.Logger = logging.getLogger("CrawlWorker")
 
+
 class Crawler:
     def __init__(
         self, crawlopts: CrawlConfig, profileopts: List[ProfileConfig]

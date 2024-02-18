@@ -14,7 +14,7 @@ import nltk
 from collections import defaultdict
 from nltk.corpus import stopwords
 from nltk.collocations import BigramAssocMeasures, BigramCollocationFinder
-from typing import Set, Dict, List, TypeVarTuple
+from typing import Set, Dict, List
 from pqdm.processes import pqdm
 from unidecode import unidecode
 import pickle
@@ -37,7 +37,9 @@ class IndexManager:
 
         for profile in self.profiles:
             engine: Engine = create_engine(
-                "sqlite:///" + os.path.join(self.crawlopts.database_dir, profile.profile_name) + ".db"
+                "sqlite:///"
+                + os.path.join(self.crawlopts.database_dir, profile.profile_name)
+                + ".db"
             )
 
             self.sessionmakers[profile.profile_name] = sessionmaker(bind=engine)

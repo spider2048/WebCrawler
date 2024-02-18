@@ -34,7 +34,6 @@ class Page:
             return unidecode.unidecode(title[0])
         return ""
 
-
     @staticmethod
     async def get(websession: aiohttp.ClientSession, url: str) -> str:
         async with websession.get(url) as response:

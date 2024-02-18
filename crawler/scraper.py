@@ -15,6 +15,7 @@ from graphing import Graph
 
 logger: logging.Logger = logging.getLogger("Scraper")
 
+
 class Scraper:
     def __init__(
         self,
@@ -62,7 +63,7 @@ class Scraper:
                     profile_name=self.profile.profile_name,
                     time=self.crawlopts.unix_time,
                     hash=hash_str,
-                    title=title
+                    title=title,
                 )
             )
 
@@ -88,9 +89,7 @@ class Scraper:
         logger.info(
             "[%s] Crawled: %d URLs", self.profile.profile_name, len(self.visited_urls)
         )
-        logger.info(
-            "[%s] queue size: %d", self.profile.profile_name, len(self.queue)
-        )
+        logger.info("[%s] queue size: %d", self.profile.profile_name, len(self.queue))
 
         # Store graph
         await self.graph.save(

@@ -6,6 +6,7 @@ import aiofiles
 
 logger: logging.Logger = logging.getLogger("Graphing")
 
+
 class Graph:
     def __init__(self) -> None:
         self.graph = nx.DiGraph()

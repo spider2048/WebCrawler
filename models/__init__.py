@@ -12,6 +12,7 @@ Base = declarative_base()
 TIMESTAMP_FORMAT = "%Y-%m-%d %H-%M-%S"
 LOGGING_FORMAT = "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s"
 
+
 class URLData(Base):
     __tablename__: str = "URLProfileData"
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -20,6 +21,7 @@ class URLData(Base):
     time = Column(Integer, nullable=False)
     hash = Column(String(64), nullable=False)
     title = Column(String, nullable=False)
+
 
 class CrawlConfig:
     def __init__(self, options, make_dirs=True):
@@ -38,7 +40,7 @@ class CrawlConfig:
         # Create missing folders
         if make_dirs:
             self.create_dirs()
-    
+
     @classmethod
     def load_config(cls, config_path, make_dirs=True):
         with open(config_path) as fd:
@@ -64,7 +66,7 @@ class ProfileConfig:
         self.profile_name: str = profile_name
         self.locations: List[str] = profile["locations"]
         self.depth: int = profile["depth"]
-        
+
         self.filters: List[re.Pattern] = [
             re.compile(pattern) for pattern in profile["filter"]
         ]
@@ -81,17 +83,18 @@ class ProfileConfig:
         with open(config) as fd:
             config = toml.load(fd)
 
-        return [ProfileConfig(name, opts) for (name, opts) in config["profiles"].items()]
+        return [
+            ProfileConfig(name, opts) for (name, opts) in config["profiles"].items()
+        ]
 
     def filter(self, url: str) -> bool:
         if self.filters:
             if any(re.search(filter, url) for filter in self.filters):
                 return False
-        
+
         if self.matches:
             if any(re.search(matchp, url) for matchp in self.matches):
                 return True
             return False
         else:
             return True
-    
