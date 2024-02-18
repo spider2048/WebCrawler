@@ -20,59 +20,68 @@ from unidecode import unidecode
 import pickle
 
 sys.path.extend([os.getcwd()])
-from models import CrawlConfig, URLData
+from models import CrawlConfig, ProfileConfig, URLData
 
 STOPWORDS = set(stopwords.words())
 REMOVE = set(".!#()*&^")
 logger: logging.Logger = logging.getLogger("Indexer")
 
+
 class IndexManager:
-    def __init__(self, crawlopts: CrawlConfig, profile: str) -> None:
+    def __init__(self, crawlopts: CrawlConfig, profiles: List[ProfileConfig]) -> None:
         self.crawlopts: CrawlConfig = crawlopts
-        self.profile: str = profile
+        self.profiles: str = profiles
 
-        engine: Engine = create_engine(
-            "sqlite:///" + os.path.join(self.crawlopts.database_dir, profile) + ".db"
-        )
-
-        self.sessionmaker: sessionmaker = sessionmaker(bind=engine)
+        self.sessionmakers: Dict[str, sessionmaker] = {}
         self.bigram_map = defaultdict(set)
-        self.token_pairs: List[Dict[str, Set[str]]] = []
+
+        for profile in self.profiles:
+            engine: Engine = create_engine(
+                "sqlite:///" + os.path.join(self.crawlopts.database_dir, profile.profile_name) + ".db"
+            )
+
+            self.sessionmakers[profile.profile_name] = sessionmaker(bind=engine)
 
     def process(self):
-        self.get_all_data()
-        self.group_tokens()
+        token_pairs = self.get_all_data()
+        self.group_tokens(token_pairs)
 
-    def get_all_data(self) -> None:
-        session: Session = self.sessionmaker()
-        urldata = session.query(URLData.hash.distinct()).all()
+    def get_all_data(self) -> List[Dict[str, Set[str]]]:
+        hashes = []
 
-        logger.info("Found %d URLs to index", len(urldata))
+        for _, sessionmaker in self.sessionmakers.items():
+            for query in sessionmaker().query(URLData.hash.distinct()).all():
+                hashes.append(str(query[0]))
+
+        logger.info("Found %d URLs to index", len(hashes))
 
         worker_args = []
-        for hash in urldata:
-            src = os.path.join(
-                self.crawlopts.cache_dir,
-                str(hash[0])
-            )
-            worker_args.append(src)
-        
+        for hash in hashes:
+            worker_args.append(os.path.join(self.crawlopts.cache_dir, hash))
+
         logger.info("Indexing with %d workers.", self.crawlopts.workers)
         t_start = time.perf_counter()
 
-        self.token_pairs = pqdm(worker_args, Indexer.worker, self.crawlopts.workers)
+        token_pairs = pqdm(worker_args, Indexer.worker, self.crawlopts.workers)
 
         t_end = time.perf_counter()
         logger.info("Finished indexing in %.2fs", t_end - t_start)
 
-    def group_tokens(self):
-        for hash, bigrams in self.token_pairs:
+        return token_pairs
+
+    def group_tokens(self, token_pairs):
+        for hash, bigrams in token_pairs:
             for bigram in bigrams:
                 self.bigram_map[bigram].add(hash)
 
-    def save(self, dest):
-        with open(dest, "wb+") as fd:
+    def save(self):
+        with open(self.crawlopts.index, "wb+") as fd:
             pickle.dump(self.bigram_map, fd)
+
+    def __del__(self):
+        for _, v in self.sessionmakers.items():
+            v.close_all()
+
 
 class Indexer:
     @staticmethod
@@ -86,15 +95,15 @@ class Indexer:
 
     @staticmethod
     def get_tokens(document: str) -> Set[str]:
-        tokens = set([
-            unidecode(token.casefold())
-            for token in nltk.word_tokenize(document)
-            if token.lower() not in STOPWORDS and token not in REMOVE
-        ])
+        tokens = set(
+            [
+                unidecode(token.casefold())
+                for token in nltk.word_tokenize(document)
+                if token.lower() not in STOPWORDS and token not in REMOVE
+            ]
+        )
 
         finder = BigramCollocationFinder.from_words(tokens)
         scored_bigrams = finder.score_ngrams(BigramAssocMeasures.pmi)
-        
-        return set([
-            ' '.join(bigram) for bigram, _ in scored_bigrams[:100]
-        ])
+
+        return set([" ".join(bigram) for bigram, _ in scored_bigrams[:100]])

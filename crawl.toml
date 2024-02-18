@@ -5,7 +5,7 @@ debug = true
 profile = true
 cache_dir = './data'
 graph_dir = './graphs'
-index_dir = "./indexes"
+index = "./indexes.pkl"
 workers = 8
 
 [profiles]

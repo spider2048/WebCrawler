@@ -10,6 +10,7 @@ import toml
 
 Base = declarative_base()
 TIMESTAMP_FORMAT = "%Y-%m-%d %H-%M-%S"
+LOGGING_FORMAT = "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s"
 
 class URLData(Base):
     __tablename__: str = "URLProfileData"
@@ -32,7 +33,7 @@ class CrawlConfig:
         self.graph_ts_dir = os.path.join(self.graph_dir, self.timestamp)
         self.profile = options["profile"]
         self.workers: int = options["workers"]
-        self.index_dir: str = options["index_dir"]
+        self.index: str = options["index"]
 
         # Create missing folders
         if make_dirs:
@@ -56,9 +57,6 @@ class CrawlConfig:
 
         if self.database_dir and not os.path.exists(self.database_dir):
             os.makedirs(self.database_dir)
-        
-        if self.index_dir and not os.path.exists(self.index_dir):
-            os.makedirs(self.index_dir)
 
 
 class ProfileConfig:
@@ -77,6 +75,13 @@ class ProfileConfig:
 
         # File save tasks
         self.tasks: List[Coroutine] = []
+
+    @staticmethod
+    def load_profiles(config):
+        with open(config) as fd:
+            config = toml.load(fd)
+
+        return [ProfileConfig(name, opts) for (name, opts) in config["profiles"].items()]
 
     def filter(self, url: str) -> bool:
         if self.filters:

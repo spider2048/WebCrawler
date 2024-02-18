@@ -7,17 +7,12 @@ import cProfile
 from worker import Crawler
 from models import *
 
-LOGGING_FORMAT = "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s"
 
 def main(args):
     logging.info("Crawler running in: %s", os.getcwd())
-    with open(args.config) as fd:
-        config = toml.load(fd)
 
     crawlopts = CrawlConfig.load_config(args.config)
-    profileopts = [
-        ProfileConfig(name, opts) for (name, opts) in config["profiles"].items()
-    ]
+    profileopts = ProfileConfig.load_profiles(args.config)
 
     if crawlopts.debug:
         logging.basicConfig(

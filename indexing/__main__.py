@@ -7,10 +7,10 @@ import logging
 sys.path.extend([os.getcwd()])
 from models import *
 
-LOGGING_FORMAT = "[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s"
 
 def main(args):
     crawlopts = CrawlConfig.load_config(args.config, make_dirs=False)
+    profiles = ProfileConfig.load_profiles(args.config)
 
     logging.info("Crawler running in: %s", os.getcwd())
     crawlopts = CrawlConfig.load_config(args.config)
@@ -30,17 +30,15 @@ def main(args):
             format=LOGGING_FORMAT,
         )
 
-    manager = IndexManager(crawlopts, args.profile)
+    manager = IndexManager(crawlopts, profiles)
     manager.process()
-    
-    index_dst = os.path.join(crawlopts.index_dir, f"{args.profile}.pkl")
-    manager.save(index_dst)
+    manager.save()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-config", required=True, help="Path to the config file")
-    parser.add_argument("-profile", required=True, help="Name of the profile")
 
     args = parser.parse_args()
     main(args)
