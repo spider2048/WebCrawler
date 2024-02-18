@@ -1,10 +1,12 @@
 [crawl_options]
 log_file = './crawl.log'
 database_location = './databases'
-debug = false
+debug = true
 profile = true
 cache_dir = './data'
 graph_dir = './graphs'
+index_dir = "./indexes"
+workers = 8
 
 [profiles]
 #  [profiles.my_website]
@@ -21,7 +23,7 @@ graph_dir = './graphs'
         'https://scrapeme.live/shop/'
     ]
 
-    depth = 3
+    depth = 2
     
     filter = [
         '^https://scrapeme.live/page/.*',

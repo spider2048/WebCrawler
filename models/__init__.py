@@ -31,6 +31,8 @@ class CrawlConfig:
         self.unix_time: int = int(time.time())
         self.graph_ts_dir = os.path.join(self.graph_dir, self.timestamp)
         self.profile = options["profile"]
+        self.workers: int = options["workers"]
+        self.index_dir: str = options["index_dir"]
 
         # Create missing folders
         if make_dirs:
@@ -54,6 +56,9 @@ class CrawlConfig:
 
         if self.database_dir and not os.path.exists(self.database_dir):
             os.makedirs(self.database_dir)
+        
+        if self.index_dir and not os.path.exists(self.index_dir):
+            os.makedirs(self.index_dir)
 
 
 class ProfileConfig:
@@ -84,3 +89,4 @@ class ProfileConfig:
             return False
         else:
             return True
+    

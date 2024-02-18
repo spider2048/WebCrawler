@@ -2,7 +2,10 @@
 
 {% block head %}
 
-<script src="{{ url_for('static', filename='d3.js') }}"></script>
+<script src="https://unpkg.com/layout-base/layout-base.js"></script>
+<script src="https://unpkg.com/cytoscape@3.28.1/dist/cytoscape.min.js"></script>
+<script src="https://unpkg.com/cose-base/cose-base.js"></script>
+<script src="{{ url_for('static', filename='cytoscape-cose-bilkent.js') }}"></script>
 
 {% endblock %}
 
@@ -19,6 +22,7 @@
         <svg width="1024" height="768"></svg>
     </div>
 </div>
+
 
 
 <script src="{{url_for('static', filename='script.js')}}"></script>

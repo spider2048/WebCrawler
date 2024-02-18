@@ -13,6 +13,7 @@ from models import *
 from page_utils import *
 from graphing import Graph
 
+logger: logging.Logger = logging.getLogger("Scraper")
 
 class Scraper:
     def __init__(
@@ -22,13 +23,12 @@ class Scraper:
         session: AsyncSession,
     ) -> None:
         # Logging
-        self.logger = logging.getLogger(__name__)
         self.crawlopts = crawlopts
 
         if self.crawlopts.debug:
-            self.logger.setLevel(logging.DEBUG)
+            logger.setLevel(logging.DEBUG)
         else:
-            self.logger.setLevel(logging.INFO)
+            logger.setLevel(logging.INFO)
 
         # Parse/Get options
         self.profile: ProfileConfig = profile
@@ -47,7 +47,7 @@ class Scraper:
 
     async def crawl_worker(self, url: str, websession: aiohttp.ClientSession):
         self.visited_urls.add(url)
-        self.logger.debug("Visiting %s", url)
+        logger.debug("Visiting %s", url)
 
         try:  # TODO: Find a better alternative
             # Fetch page and links
@@ -69,8 +69,8 @@ class Scraper:
             self.graph.update_edges(url, links, title)
             self.new_queue.update(links)
         except Exception as err:
-            self.logger.error("Error (%s) crawling url %s", err, url)
-            self.logger.error(traceback.format_exc())
+            logger.error("Error (%s) crawling url %s", err, url)
+            logger.error(traceback.format_exc())
             self.graph.update_edges(url, [f"ERROR {err}"], "<error-title>")
 
     async def crawl(self):
@@ -85,10 +85,10 @@ class Scraper:
             self.queue = self.new_queue - self.visited_urls
             self.new_queue.clear()
 
-        self.logger.info(
+        logger.info(
             "[%s] Crawled: %d URLs", self.profile.profile_name, len(self.visited_urls)
         )
-        self.logger.info(
+        logger.info(
             "[%s] queue size: %d", self.profile.profile_name, len(self.queue)
         )
 

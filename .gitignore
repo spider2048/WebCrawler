@@ -170,3 +170,5 @@ cython_debug/
 *.perf
 
 /.vscode/
+
+*.pkl

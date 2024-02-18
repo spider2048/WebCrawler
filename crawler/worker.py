@@ -12,23 +12,22 @@ import sys
 sys.path.extend(os.getcwd())
 from models import *
 
+logger: logging.Logger = logging.getLogger("CrawlWorker")
 
 class Crawler:
     def __init__(
         self, crawlopts: CrawlConfig, profileopts: List[ProfileConfig]
     ) -> None:
-        self.logger = logging.getLogger(__name__)
         self.profiles: List[ProfileConfig] = profileopts
         self.crawl_workers: List[Coroutine] = []
 
         self.crawlopts: CrawlConfig = crawlopts
-
         if self.crawlopts.debug:
-            self.logger.setLevel(logging.DEBUG)
+            logger.setLevel(logging.DEBUG)
         else:
-            self.logger.setLevel(logging.INFO)
+            logger.setLevel(logging.INFO)
 
-        self.logger.info("Checking profiles [%d profile(s)]", len(profileopts))
+        logger.info("Checking profiles [%d profile(s)]", len(profileopts))
 
         # SQLAlchemy (engines)
         self.engines: Dict[str, AsyncEngine] = {}
@@ -55,7 +54,7 @@ class Crawler:
         # Setup database
         await self.setup_database()
 
-        self.logger.info("Starting crawling at: %s", time.asctime())
+        logger.info("Starting crawling at: %s", time.asctime())
         t_start = time.perf_counter_ns()
 
         # Schedule crawl workers
@@ -67,8 +66,8 @@ class Crawler:
         t_end = time.perf_counter_ns()
         t_taken = (t_end - t_start) / 1e9
 
-        self.logger.info("Ending crawling at: %s", time.asctime())
-        self.logger.info("Total time taken: %.5f", t_taken)
+        logger.info("Ending crawling at: %s", time.asctime())
+        logger.info("Total time taken: %.5f", t_taken)
 
         # Save entries to database
         await self.finish()
@@ -79,7 +78,7 @@ class Crawler:
             session = self.session_makers[profile.profile_name]()
 
             # Schedule scraper
-            self.logger.info("%d> %s", it, profile.profile_name)
+            logger.info("%d> %s", it, profile.profile_name)
             scraper = Scraper(profile, self.crawlopts, session)
 
             # Append session
@@ -90,14 +89,14 @@ class Crawler:
         # Save all pending files
         for profile in self.profiles:
             await asyncio.gather(*profile.tasks)
-            self.logger.info(
+            logger.info(
                 "%s> Saved %d files to disk",
                 profile.profile_name,
                 len(profile.tasks),
             )
 
     async def commit_sessions(self):
-        self.logger.info("Committing sessions")
+        logger.info("Committing sessions")
 
         # Commit all sessions
         await asyncio.gather(*[session.commit() for session in self.sessions])
@@ -111,6 +110,7 @@ class Crawler:
 
         for engine in self.engines.values():
             async with engine.begin() as conn:
+                # Optimization
                 await conn.exec_driver_sql("PRAGMA journal_mode = WAL;")
                 await conn.exec_driver_sql("PRAGMA busy_timeout = 5000;")
                 await conn.exec_driver_sql("PRAGMA synchronous = NORMAL;")
