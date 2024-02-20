@@ -47,7 +47,7 @@ def main(args) -> None:
         for _, sessionmaker in sessionmakers.items():
             session: Session = sessionmaker()
 
-            result = session.query(URLData).filter(URLData.hash == hash).first()
+            result = session.query(URLData).filter(URLData.hash == hash).order_by(URLData.time.desc()).first()
             if result:
                 return (
                     str(result.url),
@@ -56,7 +56,7 @@ def main(args) -> None:
                     str(result.title),
                 )
             
-            session.close()
+            session.close_all()
 
     @app.route("/search")
     def search():

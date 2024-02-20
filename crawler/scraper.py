@@ -1,12 +1,12 @@
 import asyncio
-import trace
 import aiohttp
 import logging
 import os
 import sys
-from typing import Coroutine, List, Set
+from typing import Coroutine, List, Set, Tuple
 import traceback
 from sqlalchemy.ext.asyncio import AsyncSession
+import itertools
 
 sys.path.extend([os.getcwd()])
 from models import *
@@ -46,14 +46,18 @@ class Scraper:
         # Database (SQLAlchemy)
         self.session: AsyncSession = session
 
-    async def crawl_worker(self, url: str, websession: aiohttp.ClientSession):
-        self.visited_urls.add(url)
-        logger.debug("Visiting %s", url)
+        # Web session
+        connector = aiohttp.TCPConnector(limit_per_host=50)
+        self.websession: aiohttp.ClientSession = aiohttp.ClientSession(connector=connector)
 
-        try:  # TODO: Find a better alternative
-            # Fetch page and links
+    async def crawl_worker(self, url: str, content: str):
+        self.visited_urls.add(url)
+
+        # TODO: Find a better alternative
+        try:
+            # Parse
             links, hash_str, title = await Page.parse(
-                url, websession, self.crawlopts.cache_dir, self.profile
+                url, content, self.crawlopts.cache_dir, self.profile
             )
 
             # Add page data to database
@@ -76,9 +80,11 @@ class Scraper:
 
     async def crawl(self):
         # Start crawling
-        websession = aiohttp.ClientSession()
         for _ in range(self.profile.depth):
-            self.tasks.extend(self.crawl_worker(url, websession) for url in self.queue)
+            self.tasks.extend(
+                self.crawl_worker(url, content)
+                for url, content in await self.get_all_urls(self.queue)
+            )
 
             await asyncio.gather(*self.tasks)
             self.tasks.clear()
@@ -99,4 +105,13 @@ class Scraper:
         )
 
         # Cleanup Web session
-        await websession.close()
+        await self.websession.close()
+
+    async def get_all_urls(self, queue: Set[str]) -> List[Tuple[str, str]]:
+        results = await asyncio.gather(*[Scraper.get(self.websession, q) for q in queue])
+        return zip(queue, results)
+        
+    @staticmethod
+    async def get(websession, url: str) -> str:
+        async with websession.get(url, verify_ssl=False) as response:
+            return await response.text()

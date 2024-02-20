@@ -29,6 +29,12 @@ logger: logging.Logger = logging.getLogger("Indexer")
 
 class IndexManager:
     def __init__(self, crawlopts: CrawlConfig, profiles: List[ProfileConfig]) -> None:
+
+        logging.debug("Downloading nltk corpora")
+        nltk.download("punkt")
+        nltk.download("stopwords")
+        logging.debug("Finished Downloading corpora")
+
         self.crawlopts: CrawlConfig = crawlopts
         self.profiles: str = profiles
 
@@ -64,7 +70,7 @@ class IndexManager:
         logger.info("Indexing with %d workers.", self.crawlopts.workers)
         t_start = time.perf_counter()
 
-        token_pairs = pqdm(worker_args, Indexer.worker, self.crawlopts.workers)
+        token_pairs = pqdm(worker_args, Indexer.worker, self.crawlopts.workers, exception_behaviour="immediate")
 
         t_end = time.perf_counter()
         logger.info("Finished indexing in %.2fs", t_end - t_start)
@@ -108,4 +114,4 @@ class Indexer:
         finder = BigramCollocationFinder.from_words(tokens)
         scored_bigrams = finder.score_ngrams(BigramAssocMeasures.pmi)
 
-        return set([" ".join(bigram) for bigram, _ in scored_bigrams[:100]])
+        return set([" ".join(bigram) for bigram, _ in scored_bigrams[:100]]) | set(tokens)

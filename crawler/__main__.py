@@ -6,6 +6,7 @@ import os
 import cProfile
 from worker import Crawler
 from models import *
+import sys
 
 
 def main(args):
@@ -39,6 +40,11 @@ def main(args):
         profiler.enable()
 
     c = Crawler(crawlopts, profileopts)
+
+    if sys.platform == 'linux':
+        import uvloop
+        uvloop.install()
+
     asyncio.run(c.run())
 
     if crawlopts.profile:

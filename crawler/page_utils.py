@@ -35,11 +35,6 @@ class Page:
         return ""
 
     @staticmethod
-    async def get(websession: aiohttp.ClientSession, url: str) -> str:
-        async with websession.get(url) as response:
-            return await response.text()
-
-    @staticmethod
     def compress(content: str) -> bytes:
         return zlib.compress(content.encode())
 
@@ -58,11 +53,10 @@ class Page:
     @staticmethod
     async def parse(
         src: str,
-        websession: aiohttp.ClientSession,
+        content: str,
         cache_dir: str,
         profile: ProfileConfig,
     ) -> Tuple[Set[str], str, str]:
-        content: str = await Page.get(websession, src)
         links: Set[str] = Page.links(src, content)
 
         compressed_data: bytes = Page.compress(content)

@@ -29,7 +29,7 @@ class Search:
         scores = []
 
         for key in self.keys:
-            score = 100 - fuzz.partial_token_sort_ratio(query, key)
+            score = 100 - fuzz.token_set_ratio(query, key)
             heappush(scores, [score, self.bigram_map[key]])
 
         top_keys = [heappop(scores) for _ in range(score_len)]

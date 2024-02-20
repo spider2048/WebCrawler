@@ -1,7 +1,7 @@
 [crawl_options]
 log_file = './crawl.log'
 database_location = './databases'
-debug = true
+debug = false
 profile = true
 cache_dir = './data'
 graph_dir = './graphs'
@@ -9,21 +9,25 @@ index = "./indexes.pkl"
 workers = 8
 
 [profiles]
-#  [profiles.my_website]
-#     locations = [
-#         'https://sp1d3r.vercel.app'
-#     ]
+ [profiles.my_website]
+    locations = [
+        'https://sp1d3r.vercel.app'
+    ]
 
-#     depth = 3
-#     same_domain = true
-#     filter = []
+    depth = 3
+    same_domain = true
+    filter = []
+
+    match = [
+        '^https://sp1d3r.vercel.app/.*'
+    ]
 
 [profiles.scrape_me]
     locations = [
         'https://scrapeme.live/shop/'
     ]
 
-    depth = 2
+    depth = 3
     
     filter = [
         '^https://scrapeme.live/page/.*',
