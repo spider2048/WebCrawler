@@ -15,7 +15,7 @@ class Search:
     def __init__(self, crawlopts: CrawlConfig):
         self.crawlopts = crawlopts
         self.bigram_map: DefaultDict[str, Set[str]]
-        self.keys: Set[str] = []
+        self.keys: Set[str] = set()
 
         self.load()
 
@@ -23,7 +23,7 @@ class Search:
         with open(self.crawlopts.index, "rb") as index:
             self.bigram_map: DefaultDict[str, Set[str]] = pickle.load(index)
 
-        self.keys = set(self.bigram_map.keys())
+        self.keys.update(self.bigram_map.keys())
 
     def search(self, query: str, score_len=10):
         scores = []

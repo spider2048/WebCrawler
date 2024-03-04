@@ -38,10 +38,5 @@ workers = 8
     ]
 
     match = [
-<<<<<<< HEAD
-        '^https://scrapeme.live/*'
-    ]
-=======
         '^https://github.com/spider2048/.*$'
     ]
->>>>>>> 5fef204 (Improve async)

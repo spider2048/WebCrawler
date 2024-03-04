@@ -46,16 +46,6 @@ class Scraper:
         # Database (SQLAlchemy)
         self.session: AsyncSession = session
 
-<<<<<<< HEAD
-        # Web session
-        connector = aiohttp.TCPConnector(limit_per_host=50)
-        self.websession: aiohttp.ClientSession = aiohttp.ClientSession(connector=connector)
-=======
-    async def crawl_worker(self, url: str, content: str):
-        self.visited_urls.add(url)
-        logger.debug("Visiting %s", url)
->>>>>>> 5fef204 (Improve async)
-
     async def crawl_worker(self, url: str, content: str):
         self.visited_urls.add(url)
 
@@ -85,13 +75,10 @@ class Scraper:
             self.graph.update_edges(url, [f"ERROR {err}"], "<error-title>")
 
     async def crawl(self):
+        websession = aiohttp.ClientSession()
+
         # Start crawling
         for _ in range(self.profile.depth):
-<<<<<<< HEAD
-            self.tasks.extend(
-                self.crawl_worker(url, content)
-                for url, content in await self.get_all_urls(self.queue)
-=======
             contents: List[str] = await asyncio.gather(*[
                 Page.get(websession, url)
                 for url in self.queue
@@ -100,7 +87,6 @@ class Scraper:
             self.tasks.extend(
                 self.crawl_worker(url, content)
                 for (url, content) in zip(self.queue, contents)
->>>>>>> 5fef204 (Improve async)
             )
 
             await asyncio.gather(*self.tasks)
@@ -117,18 +103,10 @@ class Scraper:
         # Store graph
         await self.graph.save(
             os.path.join(
-                self.crawlopts.graph_ts_dir, f"{self.profile.profile_name}.json"
+                self.crawlopts.graph_ts_dir,
+                f"{self.profile.profile_name}.json"
             )
         )
 
         # Cleanup Web session
-        await self.websession.close()
-
-    async def get_all_urls(self, queue: Set[str]) -> List[Tuple[str, str]]:
-        results = await asyncio.gather(*[Scraper.get(self.websession, q) for q in queue])
-        return zip(queue, results)
-        
-    @staticmethod
-    async def get(websession, url: str) -> str:
-        async with websession.get(url, verify_ssl=False) as response:
-            return await response.text()
+        await websession.close()

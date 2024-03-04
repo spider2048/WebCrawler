@@ -43,6 +43,11 @@ class Page:
         return hashlib.sha1(content).hexdigest()
 
     @staticmethod
+    async def get(websesion: aiohttp.ClientSession, url: str):
+        async with websesion.get(url) as response:
+            return await response.text()
+
+    @staticmethod
     async def cache(dest, data):
         if os.path.exists(dest):
             return
@@ -57,10 +62,7 @@ class Page:
         cache_dir: str,
         profile: ProfileConfig,
     ) -> Tuple[Set[str], str, str]:
-<<<<<<< HEAD
-=======
         # content: str = await Page.get(websession, src)
->>>>>>> 5fef204 (Improve async)
         links: Set[str] = Page.links(src, content)
 
         compressed_data: bytes = Page.compress(content)
