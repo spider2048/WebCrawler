@@ -3,6 +3,7 @@ import os
 import sys
 from indexer import IndexManager
 import logging
+import nltk
 
 sys.path.extend([os.getcwd()])
 from models import *

@@ -57,6 +57,10 @@ class Page:
         cache_dir: str,
         profile: ProfileConfig,
     ) -> Tuple[Set[str], str, str]:
+<<<<<<< HEAD
+=======
+        # content: str = await Page.get(websession, src)
+>>>>>>> 5fef204 (Improve async)
         links: Set[str] = Page.links(src, content)
 
         compressed_data: bytes = Page.compress(content)

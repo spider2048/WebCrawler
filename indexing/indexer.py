@@ -1,7 +1,5 @@
-from ast import Tuple
 import logging
 from bs4 import BeautifulSoup
-import fuzzyset
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import Engine
@@ -36,7 +34,7 @@ class IndexManager:
         logging.debug("Finished Downloading corpora")
 
         self.crawlopts: CrawlConfig = crawlopts
-        self.profiles: str = profiles
+        self.profiles: List[ProfileConfig] = profiles
 
         self.sessionmakers: Dict[str, sessionmaker] = {}
         self.bigram_map = defaultdict(set)

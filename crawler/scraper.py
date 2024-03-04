@@ -46,9 +46,15 @@ class Scraper:
         # Database (SQLAlchemy)
         self.session: AsyncSession = session
 
+<<<<<<< HEAD
         # Web session
         connector = aiohttp.TCPConnector(limit_per_host=50)
         self.websession: aiohttp.ClientSession = aiohttp.ClientSession(connector=connector)
+=======
+    async def crawl_worker(self, url: str, content: str):
+        self.visited_urls.add(url)
+        logger.debug("Visiting %s", url)
+>>>>>>> 5fef204 (Improve async)
 
     async def crawl_worker(self, url: str, content: str):
         self.visited_urls.add(url)
@@ -81,9 +87,20 @@ class Scraper:
     async def crawl(self):
         # Start crawling
         for _ in range(self.profile.depth):
+<<<<<<< HEAD
             self.tasks.extend(
                 self.crawl_worker(url, content)
                 for url, content in await self.get_all_urls(self.queue)
+=======
+            contents: List[str] = await asyncio.gather(*[
+                Page.get(websession, url)
+                for url in self.queue
+            ])
+
+            self.tasks.extend(
+                self.crawl_worker(url, content)
+                for (url, content) in zip(self.queue, contents)
+>>>>>>> 5fef204 (Improve async)
             )
 
             await asyncio.gather(*self.tasks)

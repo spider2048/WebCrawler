@@ -61,6 +61,7 @@ def main(args) -> None:
     @app.route("/search")
     def search():
         try:
+            t_start = time.perf_counter()
             query = request.args.get("search").casefold()
             results = []
 
@@ -75,6 +76,7 @@ def main(args) -> None:
                     }
                 )
 
+            logging.info("Search finished in: %.3f", time.perf_counter() - t_start)
             return jsonify(results)
         except Exception as err:
             logger.error("search failed with: %s", err)

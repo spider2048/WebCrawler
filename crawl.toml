@@ -22,24 +22,26 @@ workers = 8
         '^https://sp1d3r.vercel.app/.*'
     ]
 
+#     match = [
+#         '^https://sp1d3r.vercel.app/.*$'
+#     ]
+
 [profiles.scrape_me]
     locations = [
-        'https://scrapeme.live/shop/'
+        'https://github.com/spider2048/'
     ]
 
     depth = 3
     
     filter = [
-        '^https://scrapeme.live/page/.*',
-        '^http://scrapeme.live/page/.*',
-        '^https://scrapeme.live/shop/.*/?add-to-cart=.*',
-        '.*\.png$',
-        '.*\.jpg$',
-        '^https://scrapeme.live/product-tag/.*',
-        '^https://scrapeme.live/product-category/.*',
-        '^https://scrapeme.live/wp-login.php.*$'
+        # 'https://github.com/spider2048/.*\?.*$'
     ]
 
     match = [
+<<<<<<< HEAD
         '^https://scrapeme.live/*'
     ]
+=======
+        '^https://github.com/spider2048/.*$'
+    ]
+>>>>>>> 5fef204 (Improve async)
